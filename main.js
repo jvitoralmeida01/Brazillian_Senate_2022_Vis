@@ -60,7 +60,7 @@ const getCircleX = (index) => {
   let currRing = ringByIndex(index)
   const step = getSteps(currRing)
   const angle = getAngle(currRing, index, step)
-  return [Math.sin(angle * Math.PI/180) * rings[currRing].radius + (width/2), angle]
+  return Math.sin(angle * Math.PI/180) * rings[currRing].radius + (width/2)
 }
 const getCircleY = (index) => {
   let currRing = ringByIndex(index)
@@ -115,7 +115,7 @@ fetchText(csvUrl)
         .attr('fill', d=>getCorPartidor(d.SiglaPartidoParlamentar))
         .attr('r', 15)
         .style('opacity', 0.3)
-        .attr('cx', d=>positions[d.id].x[0])
+        .attr('cx', d=>positions[d.id].x)
         .attr('cy', d=>positions[d.id].y)
         .attr("id", d=>"senador_"+d.id)
         .text((d) => d.NomeParlamentar + " " + d.SiglaPartidoParlamentar)
