@@ -12,7 +12,7 @@ const getCorPartidor = (partido) => {
     randomColor.push(Math.floor(Math.random() * 120) + 100);
     randomColor.push(Math.floor(Math.random() * 120) + 100);
     randomColor.push(Math.floor(Math.random() * 120) + 100);
-    return corPartidoMap.set(
+    corPartidoMap.set(
       partido,
       "rgb(" +
         randomColor[0] +
@@ -22,8 +22,53 @@ const getCorPartidor = (partido) => {
         randomColor[2] +
         ")"
     );
+    return corPartidoMap.get(partido);
   }
 };
+
+const width = 850;
+const height = 650;
+const rings = [
+  {limit: 10, radius: 150},
+  {limit: 23, radius: 200},
+  {limit: 42, radius: 250},
+  {limit: 60, radius: 300},
+  {limit: 81, radius: 350},
+]
+function ringByIndex(index){
+  if(index < 10) return 0
+  if(index < 23) return 1
+  if(index < 42) return 2
+  if(index < 60) return 3
+  if(index < 81) return 4
+}
+function getSteps(currRing){
+  if(currRing == 0){
+    return step = 180 / rings[currRing].limit + 2
+  }else{
+    return step = 180 / (rings[currRing].limit - rings[currRing-1].limit - 1)
+  }
+}
+function getAngle(currRing, index, step){
+  if(currRing == 0){
+    return angle = 90 + index*step
+  }else{
+    console.log(angle)
+    return angle = 90 + (index-rings[currRing-1].limit)*step
+  }
+}
+const getCircleX = (index) => {
+  let currRing = ringByIndex(index)
+  const step = getSteps(currRing)
+  const angle = getAngle(currRing, index, step)
+  return [Math.sin(angle * Math.PI/180) * rings[currRing].radius + (width/2), angle]
+}
+const getCircleY = (index) => {
+  let currRing = ringByIndex(index)
+  const step = getSteps(currRing)
+  const angle = getAngle(currRing, index, step)
+  return Math.cos(angle * Math.PI/180) * rings[currRing].radius + (height) - 20
+}
 
 const csvUrl = "./Senadores.csv";
 // //"https://raw.githubusercontent.com/nivan/testPython/main/ListaParlamentarEmExercicio.csv";
@@ -37,35 +82,94 @@ fetchText(csvUrl)
     return data;
   })
   .then((data) => {
-    //ações
-    let dataIndex = 8;
-    let currSenador = data[dataIndex];
 
-    let fullSvg = d3.select("div").select("svg");
-    let group = fullSvg.select("g");
+    let positions = [];
+    data.forEach((d, i) => {
+      positions.push({
+        x: getCircleX(i),
+        y: getCircleY(i),
+      });
+    })
 
     let image = d3.select("img");
     let labelNome = d3.select("h1");
     let labelPartido = d3.select("h2");
 
-    let circles = group.selectAll("circle");
+    let svg = d3.select("div").select("svg");
+    let circles = svg.selectAll("circle");
     circles
       .data(data)
-      .style("fill", (d) => {
-        return getCorPartidor(d.SiglaPartidoParlamentar);
-      })
-      .text((d) => d.NomeParlamentar + " " + d.SiglaPartidoParlamentar)
-      .on("click", function (event, d) {
-        image.attr("src", () => {
-          return d.UrlFotoParlamentar;
-        });
+      .join(
+        enter => enter
+        .append('circle')
+        .attr('fill', d=>getCorPartidor(d.SiglaPartidoParlamentar))
+        .attr('r', 15)
+        .style('opacity', 0.3)
+        .attr('cx', d=>positions[d.id].x[0])
+        .attr('cy', d=>positions[d.id].y)
+        .attr("id", d=>"senador_"+d.id)
+        .text((d) => d.NomeParlamentar + " " + d.SiglaPartidoParlamentar)
+        .on("click", (event, d) => {
 
-        labelNome.text(d.NomeParlamentar);
+          gsap.fromTo("img", 
+          {transform: "translateY(290px) scale(0.5)", opacity: 0}, 
+          {
+            ease: Power3.easeOut,
+            duration: 0.8, 
+            transform: "translateY(290px) scale(1)", 
+            opacity: 1,
+          }
+          );
+          gsap.fromTo("h1", 
+          {transform: "translateY(450px)", opacity: 0}, 
+          {
+            ease: Back.easeOut.config(1.7),
+            duration: 0.9, 
+            transform: "translateY(400px)", 
+            opacity: 1}
+          );
+          gsap.fromTo("h2", 
+          {transform: "translateY(500px)", opacity: 0}, 
+          {
+            ease: Back.easeOut.config(1.7),
+            duration: 0.9,
+            delay: 0.3, 
+            transform: "translateY(450px)",
+            opacity: 1
+          }
+          );
 
-        labelPartido
-          .style("color", getCorPartidor(d.SiglaPartidoParlamentar))
-          .text(d.SiglaPartidoParlamentar);
-      });
+          image.attr("src", () => {
+            return d.UrlFotoParlamentar;
+          })
+          .on('click', () => {
+            window.open(d.UrlFotoParlamentar)
+          })
+
+          labelNome.text(d.NomeParlamentar);
+
+          labelPartido
+            .style("color", getCorPartidor(d.SiglaPartidoParlamentar))
+            .text(d.SiglaPartidoParlamentar);
+        })
+        .on("mouseover", (event, d) => {
+          d3.select(event.target)
+          .transition()
+          .duration(200)
+          .attr("r", 20)
+          .style('opacity', 1)
+          .style('stroke', 'white')
+          .style('stroke-width', '2px');
+        })
+        .on("mouseleave", (event, d) => {
+          d3.select(event.target)
+          .transition()
+          .duration(200)
+          .attr("r", 15)
+          .style('opacity', 0.2)
+          .style('stroke-width', '0px');
+        })
+      )
   });
 
 //svgTitle.innerHTML = nome;
