@@ -53,7 +53,6 @@ function getAngle(currRing, index, step){
   if(currRing == 0){
     return angle = 90 + index*step
   }else{
-    console.log(angle)
     return angle = 90 + (index-rings[currRing-1].limit)*step
   }
 }
@@ -79,6 +78,17 @@ fetchText(csvUrl)
   .then((text) => {
     //tratar dados
     data = d3.csvParse(text);
+    // Sortar por partido
+    data.sort((a, b) => {
+      console.log(a.SiglaPartidoParlamentar > b.SiglaPartidoParlamentar)
+      if(a.SiglaPartidoParlamentar > b.SiglaPartidoParlamentar){
+        return -1
+      }
+      if(b.SiglaPartidoParlamentar > a.SiglaPartidoParlamentar){
+        return 1
+      }
+      return 0
+    })
     return data;
   })
   .then((data) => {
