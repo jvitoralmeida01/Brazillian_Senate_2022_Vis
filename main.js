@@ -95,6 +95,7 @@ fetchText(csvUrl)
 
     let positions = [];
     data.forEach((d, i) => {
+      d.id = i; // criar id após sortar por partido
       positions.push({
         x: getCircleX(i),
         y: getCircleY(i),
@@ -176,7 +177,7 @@ fetchText(csvUrl)
           .transition()
           .duration(200)
           .attr("r", 15)
-          .style('opacity', 0.2)
+          .style('opacity', 0.3)
           .style('stroke-width', '0px');
         })
       )
